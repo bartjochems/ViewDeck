@@ -25,29 +25,6 @@
 
 #import <UIKit/UIKit.h>
 
-// thanks to http://stackoverflow.com/a/8594878/742176
-
-#if TARGET_OS_IPHONE && defined(__IPHONE_5_0) && (__IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_5_0) && __clang__ && (__clang_major__ >= 3)
-#define II_SDK_SUPPORTS_WEAK 1
-#elif TARGET_OS_MAC && defined(__MAC_10_7) && (MAC_OS_X_VERSION_MIN_REQUIRED >= __MAC_10_7) && __clang__ && (__clang_major__ >= 3)
-#define II_SDK_SUPPORTS_WEAK 1
-#else
-#define II_SDK_SUPPORTS_WEAK 0
-#endif
-
-#if II_SDK_SUPPORTS_WEAK
-#define __ii_weak        __weak
-#define ii_weak_property weak
-#else
-#if __clang__ && (__clang_major__ >= 3)
-#define __ii_weak __unsafe_unretained
-#else
-#define __ii_weak
-#endif
-#define ii_weak_property assign
-#endif
-
-
 @protocol IIViewDeckControllerDelegate;
 
 enum {
@@ -128,7 +105,7 @@ extern IIViewDeckOffsetOrientation IIViewDeckOffsetOrientationFromIIViewDeckSide
 typedef void (^IIViewDeckControllerBlock) (IIViewDeckController *controller, BOOL success);
 typedef void (^IIViewDeckControllerBounceBlock) (IIViewDeckController *controller);
 
-@property (nonatomic, ii_weak_property) __ii_weak id<IIViewDeckControllerDelegate> delegate;
+@property (nonatomic, assign) id<IIViewDeckControllerDelegate> delegate;
 @property (nonatomic, assign) IIViewDeckDelegateMode delegateMode;
 
 @property (nonatomic, readonly, retain) NSArray* controllers;
@@ -140,7 +117,7 @@ typedef void (^IIViewDeckControllerBounceBlock) (IIViewDeckController *controlle
 @property (nonatomic, readonly, assign) UIViewController* slidingController;
 
 @property (nonatomic, retain) UIView* panningView;
-@property (nonatomic, ii_weak_property) __ii_weak id<UIGestureRecognizerDelegate> panningGestureDelegate;
+@property (nonatomic, assign) id<UIGestureRecognizerDelegate> panningGestureDelegate;
 @property (nonatomic, assign, getter=isEnabled) BOOL enabled;
 @property (nonatomic, assign, getter=isElastic) BOOL elastic;
 
@@ -159,7 +136,6 @@ typedef void (^IIViewDeckControllerBounceBlock) (IIViewDeckController *controlle
 @property (nonatomic, assign) CGFloat maxSize;
 @property (nonatomic, assign) BOOL resizesCenterView;
 @property (nonatomic, assign) IIViewDeckPanningMode panningMode;
-@property (nonatomic, assign) BOOL panningCancelsTouchesInView;
 @property (nonatomic, assign) IIViewDeckCenterHiddenInteractivity centerhiddenInteractivity;
 @property (nonatomic, assign) IIViewDeckNavigationControllerBehavior navigationControllerBehavior;
 @property (nonatomic, assign) BOOL automaticallyUpdateTabBarItems;
@@ -168,7 +144,6 @@ typedef void (^IIViewDeckControllerBounceBlock) (IIViewDeckController *controlle
 @property (nonatomic, assign) CGFloat bounceOpenSideDurationFactor; // Same as bounceDurationFactor, but if set, will give independent control of the bounce as the side opens fully (first half of the bounce)
 @property (nonatomic, assign) CGFloat openSlideAnimationDuration;
 @property (nonatomic, assign) CGFloat closeSlideAnimationDuration;
-@property (nonatomic, assign) CGFloat parallaxAmount;
 
 - (id)initWithCenterViewController:(UIViewController*)centerController;
 - (id)initWithCenterViewController:(UIViewController*)centerController leftViewController:(UIViewController*)leftController;
