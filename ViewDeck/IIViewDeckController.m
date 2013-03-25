@@ -229,7 +229,6 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
 @implementation IIViewDeckController
 
 @synthesize panningMode = _panningMode;
-@synthesize panningCancelsTouchesInView = _panningCancelsTouchesInView;
 @synthesize panners = _panners;
 @synthesize referenceView = _referenceView;
 @synthesize slidingController = _slidingController;
@@ -260,7 +259,6 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
 @synthesize bounceOpenSideDurationFactor = _bounceOpenSideDurationFactor;
 @synthesize openSlideAnimationDuration = _openSlideAnimationDuration;
 @synthesize closeSlideAnimationDuration = _closeSlideAnimationDuration;
-@synthesize parallaxAmount = _parallaxAmount;
 
 #pragma mark - Initalisation and deallocation
 
@@ -279,7 +277,6 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
         _elastic = YES;
         _willAppearShouldArrangeViewsAfterRotation = (UIInterfaceOrientation)UIDeviceOrientationUnknown;
         _panningMode = IIViewDeckFullViewPanning;
-        _panningCancelsTouchesInView = NO;
         _navigationControllerBehavior = IIViewDeckNavigationControllerContained;
         _centerhiddenInteractivity = IIViewDeckCenterHiddenUserInteractive;
         _sizeMode = IIViewDeckLedgeSizeMode;
@@ -533,9 +530,6 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
     self.slidingControllerView.frame = [self slidingRectForOffset:_offset forOrientation:orientation];
     if (beforeOffset != _offset)
         [self notifyDidChangeOffset:_offset orientation:orientation panning:panning];
-    
-    
-    [self setParallax];
 }
 
 - (void)hideAppropriateSideViews {
@@ -953,7 +947,7 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
                 
                 if ([other isKindOfClass:[CABasicAnimation class]]) {
                     anim = [CABasicAnimation animationWithKeyPath:@"shadowPath"];
-                    anim.fromValue = (__bridge id)[UIBezierPath bezierPathWithRect:[other.fromValue CGRectValue]].CGPath;
+                    anim.fromValue = (id)[UIBezierPath bezierPathWithRect:[other.fromValue CGRectValue]].CGPath;
                     anim.duration = other.duration;
                     anim.timingFunction = other.timingFunction;
                     break;
@@ -1457,7 +1451,10 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
     if (duration == DEFAULT_DURATION) duration = [self closeSlideDuration:animated];
     
     UIViewAnimationOptions options = UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionLayoutSubviews | UIViewAnimationOptionBeginFromCurrentState;
-    if ([self isSideOpen:side]) options |= UIViewAnimationOptionCurveEaseIn;
+    if ([self isSideOpen:side]) {
+        duration = 0.4f;
+        options |= UIViewAnimationOptionCurveEaseIn;
+    }
     
     [self notifyWillCloseSide:side animated:animated];
     [UIView animateWithDuration:duration delay:0 options:options animations:^{
@@ -2263,8 +2260,6 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
 }
 
 - (void)panned:(UIPanGestureRecognizer*)panner orientation:(IIViewDeckOffsetOrientation)orientation {
-    [self setParallax];
-    
     CGFloat pv, m;
     IIViewDeckSide minSide, maxSide;
     if (orientation == IIViewDeckHorizontalOrientation) {
@@ -2394,35 +2389,12 @@ static NSTimeInterval durationToAnimate(CGFloat pointsToAnimate, CGFloat velocit
     [self notifyDidOpenSide:openSide animated:NO];
 }
 
-- (void) setParallax {
-    if(_parallaxAmount <= 0.0) return;
-    
-    self.leftController.view.frame = [self getLeftParallax];
-    self.rightController.view.frame = [self getRightParallax];
-}
-
-- (CGRect) getLeftParallax {
-    CGFloat pv = self.slidingControllerView.frame.origin.x;
-    CGFloat diff = pv-(self.slidingControllerView.frame.size.width-_ledge[IIViewDeckLeftSide]);
-    if (diff > 0.0f) diff = 0.0f;
-    
-    return CGRectMake(diff*_parallaxAmount, self.leftController.view.frame.origin.y, self.leftController.view.frame.size.width, self.leftController.view.frame.size.height);
-}
-
-- (CGRect) getRightParallax {
-    CGFloat pv = self.slidingControllerView.frame.origin.x;
-    CGFloat diff = pv+(self.slidingControllerView.frame.size.width-_ledge[IIViewDeckRightSide]);
-    if (diff < 0.0f) diff = 0.0f;
-    
-    return CGRectMake(diff*_parallaxAmount, self.rightController.view.frame.origin.y, self.rightController.view.frame.size.width, self.rightController.view.frame.size.height);
-}
-
 
 - (void)addPanner:(UIView*)view {
     if (!view) return;
     
     UIPanGestureRecognizer* panner = II_AUTORELEASE([[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panned:)]);
-    panner.cancelsTouchesInView = _panningCancelsTouchesInView;
+    panner.cancelsTouchesInView = NO;
     panner.delegate = self;
     [view addGestureRecognizer:panner];
     [self.panners addObject:panner];
